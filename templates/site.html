@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bluecoin ATM - Web UI</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #2a252e, #312828);
+            color: #ddd;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            transform: scale(1);
+            transform-origin: top left;
+        }
+
+        .navbar {
+            background-color: #33333376;
+            width: 100%;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            padding-top: 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .navbar a,
+        .navbar button {
+            color: #ddd;
+            padding-top: 15px;
+            padding-bottom: 15px;
+            text-align: center;
+            text-decoration: none;
+            width: 100%;
+            border-bottom: 1px solid #4444441d;
+            background: none;
+            border: none;
+            transition: background-color 0.3s ease;
+            cursor: pointer;
+        }
+
+        .navbar a:hover,
+        .navbar button:hover {
+            background-color: #444;
+        }
+
+        .navbar .signout {
+            margin-top: auto;
+            border-top: 1px solid #444;
+        }
+
+        .content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        #balanceChart {
+    min-width: 250px;
+    min-height: 250px;
+    max-width: 800px; /* Set your desired max width here */
+    max-height: 300px; /* Set your desired max height here */
+}
+        .header h1 {
+            font-size: 2em;
+            margin: 0;
+            color: #fff;
+        }
+
+        #home,
+        #transactions,
+        #miner {
+            display: grid;
+            grid-template-columns: 2fr 2fr;
+            grid-template-rows: auto auto;
+            grid-auto-rows: 30%;
+            grid-gap: 10px;
+        }
+
+        .info-panel-bal,
+        .transactions-panel,
+        .miner-panel,
+        .create-transaction-panel {
+            background-color: #4444441b;
+            padding: 15px;
+            font-size: 1.5em;
+            border-radius: 8px;
+            color: #fff;
+            max-height: 400px
+        }
+
+        .balance-diff {
+            font-size: 0.8em;
+            color: #ddd;
+            margin-top: 5px;
+        }
+
+        .transactions-panel {
+            margin-top: 0;
+            margin-bottom: 5px;
+            display: flex;
+            flex-direction: column;
+            max-height: 400px;
+        }
+
+        .transaction-item p {
+    margin: 0;
+}
+
+.transaction-item .arrow {
+    font-weight: bold;
+    font-size: 1.4em;
+}
+
+.transaction-item .arrow.incoming {
+    color: green;
+}
+
+.transaction-item .arrow.outgoing {
+    color: red;
+}
+        .transactions-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #555;
+        }
+
+        .transactions-header .title {
+            font-size: 1.5em;
+        }
+
+        .transaction-item {
+            line-height: 1.3em;
+            background-color: #555;
+            padding: 5px;
+            border-radius: 4px;
+            margin: 5px;
+            zoom: 0.7;
+        }
+
+        .button {
+            background-color: #007bff;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px;
+            transition: background-color 0.3s ease;
+        }
+
+        .transactions-list {
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .button:hover {
+            background-color: #0056b3;
+        }
+
+        .notification-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+        }
+
+        .notification {
+            background-color: #444;
+            color: #ddd;
+            padding: 20px;
+            border-radius: 8px;
+            width: 75%;
+            max-width: 600px;
+            text-align: center;
+            position: relative;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            opacity: 0;
+            transform: scale(0.8);
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .notification .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: #ddd;
+            font-size: 1.5em;
+            cursor: pointer;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 4px solid #444;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-top: 10px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media (max-width: 800px) {
+
+            #balanceChart {
+                zoom: 0.75;
+            }
+            body {
+                flex-direction: column;
+            }
+            .info-panel-bal
+            .transactions-panel {
+                max-width:300px;
+            }
+            .navbar {
+                width: 100%;
+                flex-direction: row;
+                justify-content: space-around;
+                padding-top: 0;
+                padding-bottom: 10px;
+                height: 60px;
+            }
+
+            .navbar a,
+            .navbar button {
+                flex-grow: 1;
+                padding: 10px 5px;
+                font-size: 16px;
+                border-bottom: none;
+                border-right: 1px solid #444;
+            }
+
+            .navbar .signout {
+                border-top: none;
+                border-right: none;
+            }
+
+            .content {
+                padding: 5px;
+            }
+
+            .info-panel-bal,
+            .transactions-panel {
+                padding: 10px;
+                font-size: 1em;
+            }
+
+            .button {
+                padding: 8px 16px;
+            }
+
+            .transactions-panel {
+                max-height: 200px;
+            }
+
+            #home {
+                display: flex;
+                flex-direction: column;
+            }
+        }
+
+        .modal-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .modal {
+            padding: 2.5rem;
+            text-align: center;
+        }
+
+        .modal h2 {
+            margin-bottom: 1.5rem;
+            color: #fff;
+        }
+
+        .modal input {
+            width: calc(100% - 2rem);
+            padding: 0.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #282828;
+            border-radius: 4px;
+            font-size: 1.2rem;
+            background-color: #262626;
+            color: #fff;
+        }
+
+        .modal .morsels {
+            font-size: 0.9rem;
+            color: #aaa;
+            margin-bottom: 1rem;
+        }
+
+        .modal .button-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal .button-container .button {
+            padding: 0.5rem 2rem;
+            border: none;
+            border-radius: 4px;
+            background-color: #007bff;
+            color: #fff;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .modal .button-container .button:hover {
+            background-color: #0056b3;
+        }
+
+        .modal .button-container .loading-spinner {
+            display: none;
+            margin-left: 10px;
+            width: 20px;
+            height: 20px;
+            border: 4px solid #444;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .navbar svg {
+            width: 24px;
+            height: 24px;
+            vertical-align: middle;
+        }
+    </style>
+    <script src="/ATM/client.js"></script>
+    <script src="/ATM/base64.js"></script>
+    <script src="/ATM/sha1.js"></script>
+</head>
+
+<body>
+    <div class="navbar">
+        <a href="#" onclick="showHome()" title="Home"><i class="fas fa-home"></i></a>
+        <a href="#" onclick="showMiner()" title="Miner"><i class="fas fa-hammer"></i></a>
+        <a href="#" onclick="showStatistic()" title="Statistic"><i class="fas fa-chart-line"></i></a>
+        <a href="https://discord.gg/Bz6tDkRCMq" target="_blank" style="filter: invert(1);" title="Join us on Discord"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 127.14 96.36"><path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.69,84.69,65.69Z"/></svg></a>
+        <a onclick="signOut()" title="Sign Out"><i class="fas fa-sign-out-alt"></i></a>
+    </div>
+    <div class="content">
+        <div class="header">
+            <h1>Bluecoin Web UI</h1>
+        </div>
+        <div id="home" class="section">
+            <div class="info-panel-bal" id="user-info">
+                <h1>Hello, <span id="username"></span>!</h1>
+                <h2>Balance: <span id="balance"></span> BLUC's</h2>
+                <div class="balance-diff" id="balance-diff"></div>
+                <button class="button" onclick="changePassword()">Change Password</button>
+                <button class="button" onclick="deleteAccount()">Delete Account</button>
+            </div>
+            <div class="transactions-panel">
+                <div class="transactions-header">
+                    <p class="title">Transactions</p>
+                    <button class="button" onclick="createTransaction()">Create Transaction</button>
+                </div>
+                <div id="transactions-list" class="transactions-list"></div>
+            </div>
+        </div>
+        <div id="miner" class="section" style="display: none;">
+            <div class="miner-panel">
+                <h2>Miner</h2>
+                <p>Total Rewards: <span id="total-rewards">0</span> BLUC</p>
+                <button class="button" onclick="toggleMining()">Start Mining</button>
+            </div>
+        </div>
+        <div id="statistic" class="section" style="display: none;">
+            <h2>Statistics</h2>
+            <div class="info-panel-bal" style="max-height:550px;">
+                <h3>Total Bluecoins in Circulation</h3>
+                <p id="total-circulation">Loading...</p>
+                <h3>Balance Over the Past Hour</h3>
+                <canvas id="balanceChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var balance = 0;
+        var lastBalance = 0;
+        var balance_ID = null;
+        var transaction_ID = null;
+        var balanceDiff_ID = null;
+        var mining = false;
+        var userClient = null;
+        var recipientCheckInterval = null;
+        var hashRate = 0;
+        var totalRewards = 0;
+        var workers = [];
+        var initializedWorkers = 0;
+        var hashRates = [];
+        var balanceChart;
+        var balanceHistory = [];
+        var statisticsInterval = null;
+        var balanceHistoryInterval = null;
+        var first = true
+        // Initialize the chart once
+        function initializeBalanceChart() {
+    const ctx = document.getElementById('balanceChart').getContext('2d');
+    balanceChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [], // Time labels will be dynamically added
+            datasets: [{
+                label: 'Balance Over Time',
+                data: [],
+                borderColor: 'rgba(0, 123, 255, 1)',
+                backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                fill: true,
+                pointRadius: 2.2, // Remove the points
+            }]
+        },
+        options: {
+            animation: false, // Disable animation
+            responsive: true,
+            maintainAspectRatio: false, // Allow the chart to resize independently of aspect ratio
+            devicePixelRatio: 4,
+            scales: {
+                x: {
+                    type: 'time',
+                    time: {
+                        unit: 'minute',
+                        tooltipFormat: 'HH:mm',
+                        displayFormats: {
+                            minute: 'HH:mm'
+                        }
+                    }
+                },
+                y: {
+                    beginAtZero: false,
+                    min: 0,
+                    max: 20,
+                    title: {
+                        display: true,
+                        text: 'Balance (BLUC)'
+                    }
+                }
+            }
+        }
+    });
+}
+
+        // Fetch statistics and set up periodic updates
+        async function fetchStatistics() {
+            try {
+                const response = await userClient.getUsers();
+                if (response.code === 200) {
+                    const totalBalance = response.data.reduce((sum, user) => sum + user.morsel_amount, 0);
+                    document.getElementById('total-circulation').textContent = `${totalBalance / 100000} BLUC`;
+                } else {
+                    document.getElementById('total-circulation').textContent = 'Error fetching data';
+                }
+            } catch (error) {
+                console.error('Error fetching statistics:', error);
+                document.getElementById('total-circulation').textContent = 'Error fetching data';
+            }
+        }
+
+        setInterval(fetchStatistics, 2000)
+
+        async function fetchBalanceHistory() {
+    const response = balance;
+    const currentTime = new Date();
+    balanceHistory.push({ time: currentTime, balance: balance / 100000 });
+
+    // Ensure the array doesn't exceed 300 elements
+    if (balanceHistory.length > 60) {
+        balanceHistory.shift();
+    }
+
+    updateBalanceChart();
+}
+
+        // Update the chart with new data
+        function updateBalanceChart() {
+    // Get the smallest balance value
+const latestBalance = Math.min(...balanceHistory.map(entry => entry.balance));
+
+// Get the largest balance value
+const latestBalance2 = Math.max(...balanceHistory.map(entry => entry.balance));
+    balanceChart.data.labels = balanceHistory.map(entry => entry.time);
+    balanceChart.data.datasets[0].data = balanceHistory.map(entry => entry.balance);
+    balanceChart.options.scales.y.min = latestBalance - 0.3;
+    balanceChart.options.scales.y.max = latestBalance2 + 1.5;
+    balanceChart.update();
+}
+
+        function startWorkers(hash) {
+            return new Promise((resolve, reject) => {
+                const handleMessage = (event) => {
+                    const { type, nonce, timeTaken, workerIndex } = event.data;
+                    if (type === 'success') {
+                        resolve({ nonce, workerIndex });
+                    } else if (type === 'error') {
+                        reject(new Error('Worker error'));
+                    }
+                };
+
+                for (let i = 0; i < 6; i++) {
+                    workers[i] = new Worker('/ATM/webui/minerWorker.js');
+                    workers[i].onmessage = (event) => {
+                        if (event.data.type === 'initialized') {
+                            initializedWorkers++;
+                            if (initializedWorkers === 6) {
+                                for (let j = 0; j < 6; j++) {
+                                    workers[j].onmessage = handleMessage;
+                                    workers[j].postMessage({ type: 'start', hash, workerIndex: j });
+                                }
+                            }
+                        }
+                    };
+                }
+            });
+        }
+
+        async function handleMining() {
+            if (!mining) return;
+            try {
+                const initialHash = await userClient.localPowGive();
+                const { nonce, workerIndex } = await startWorkers(initialHash.hash);
+                workers.forEach((worker, index) => {
+                    if (index !== workerIndex) worker.terminate();
+                });
+
+                const response = await userClient.localPowCheck(nonce);
+                if (response.code === 200) {
+                    totalRewards += response.reward / 100000;
+                    document.getElementById('total-rewards').textContent = totalRewards.toFixed(5);
+                }
+
+                initializedWorkers = 0;
+                workers = [];
+                startMining(); // Restart the mining process
+            } catch (error) {
+                console.error('Error in mining:', error);
+                mining = false;
+                document.querySelector('.miner-panel .button').textContent = 'Start Mining';
+                shutdownAndRestartWorkers();
+            }
+        }
+
+        async function shutdownAndRestartWorkers() {
+            // Shut down all workers
+            workers.forEach(worker => worker.terminate());
+            workers = [];
+            initializedWorkers = 0;
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+
+            // Restart mining
+            if (mining) {
+                try {
+                    const initialHash = await userClient.localPowGive();
+                    const { nonce, workerIndex } = await startWorkers(initialHash.hash);
+                    workers.forEach((worker, index) => {
+                        if (index !== workerIndex) worker.terminate();
+                    });
+
+                    const response = await userClient.localPowCheck(nonce);
+                    if (response.code === 200) {
+                        totalRewards += response.reward / 100000;
+                        document.getElementById('total-rewards').textContent = totalRewards.toFixed(5);
+                    }
+
+                    initializedWorkers = 0;
+                    workers = [];
+                    startMining(); // Restart the mining process
+                } catch (error) {
+                    console.error('Error in restarting mining:', error);
+                    mining = false;
+                    document.querySelector('.miner-panel .button').textContent = 'Start Mining';
+                }
+            }
+        }
+
+        function toggleMining() {
+            const miningButton = document.querySelector('.miner-panel .button');
+            if (mining) {
+                mining = false;
+                miningButton.textContent = 'Start Mining';
+                workers.forEach(worker => worker.terminate());
+                workers = [];
+                initializedWorkers = 0;
+            } else {
+                mining = true;
+                miningButton.textContent = 'Stop Mining';
+                startMining();
+            }
+        }
+
+        async function startMining() {
+            if (mining) {
+                await handleMining();
+            }
+        }
+
+        function calculateHashRate(hashes, timeTaken) {
+            const rate = (hashes / (timeTaken / 1000)) * 60; // Hashes per minute
+            hashRates.push(rate);
+            if (hashRates.length > 3) {
+                hashRates.shift(); // Keep only the last 3 entries
+            }
+            const averageRate = hashRates.reduce((sum, r) => sum + r, 0) / hashRates.length;
+            return averageRate;
+        }
+
+        function getTransaction() {
+            userClient.getTransactions().then(response => {
+                if (response.code !== 200) {
+                    console.error('Error fetching transactions:', response);
+                    showNotification('<h1>Error!</h1><p>Transaction fetch failed, automatic transaction refreshing has been stopped. Refresh to fix.</p>');
+                    clearInterval(transaction_ID);
+                } else {
+                    updateTransactionPanel(response.data);
+                }
+            });
+        }
+
+        function decodeBase64(input) {
+            const bytes = base64js.toByteArray(input);
+            return new TextDecoder().decode(bytes);
+        }
+
+        function encodeBase64(input) {
+            const bytes = new TextEncoder().encode(input);
+            return base64js.fromByteArray(bytes);
+        }
+
+        function clearCredentials() {
+            localStorage.removeItem('username');
+            localStorage.removeItem('password');
+        }
+
+        function signOut() {
+            clearCredentials();
+            window.location.href = '/ATM/';
+        }
+
+        function checkCredentials() {
+            const username = localStorage.getItem('username');
+            const encodedPassword = localStorage.getItem('password');
+            if (!username || !encodedPassword) {
+                clearCredentials();
+
+                window.location.href = '/ATM/';
+                return;
+            }
+            const password = decodeBase64(encodedPassword);
+            const client = new BlueCoinClient(window.location.origin, true);
+            client.verifyPassword(username, password).then(response => {
+                if (response.code !== 200) {
+                    clearCredentials();
+                    window.location.href = '/ATM/';
+                } else {
+
+                    userClient = new UserBlueCoinClient('https://gabserver.eu', username, password, true);
+                    balance_ID = setInterval(() => {
+                        userClient.getBalance().then(response => {
+                            if (response.code !== 200) {
+                                showNotification('<h1>Error!</h1><p>Balance fetch failed, automatic balance refreshing has been stopped. Refresh to fix.</p>');
+                                clearInterval(balance_ID);
+                            } else {
+                                if (first) {
+                                    document.getElementById('balance').textContent = response.balance / 100000;
+                                    balance = response.balance;
+                                    first = false
+                                }
+
+                            }
+                        });
+                    }, 1000);
+
+                    // Initial balance fetch
+                    userClient.getBalance().then(response => {
+                        if (response.code !== 200) {
+                            showNotification('<h1>Error!</h1><p>Initial balance fetch failed.</p>');
+                        } else {
+                            balance = response.balance;
+                            lastBalance = balance;
+                            document.getElementById('balance').textContent = balance / 100000;
+                            // Start balance difference interval after initial fetch
+                            balanceDiff_ID = setInterval(() => {
+                                updateBalanceDifference();
+                            }, 10000);
+                        }
+                        fetchBalanceHistory();
+                        if (!balanceHistoryInterval) {
+                            balanceHistoryInterval = setInterval(fetchBalanceHistory, 15000); // Fetch balance every minute
+                        }
+                    });
+
+                    transaction_ID = setInterval(() => {
+                        getTransaction();
+                    }, 5000);
+
+                    document.getElementById('username').textContent = username;
+                    getTransaction();
+                }
+            }).catch(error => {
+                clearCredentials();
+                window.location.href = '/ATM/';
+            });
+        }
+
+        function updateBalanceDifference() {
+            const diff = (balance - lastBalance) / 100000;
+            const balanceDiffElement = document.getElementById('balance-diff');
+            if (diff > 0) {
+                balanceDiffElement.style.color = 'green';
+                balanceDiffElement.textContent = `+${diff.toFixed(5)} BLUC`;
+            } else if (diff < 0) {
+                balanceDiffElement.style.color = 'red';
+                balanceDiffElement.textContent = `${diff.toFixed(5)} BLUC`;
+            } else {
+                balanceDiffElement.textContent = '';
+            }
+            lastBalance = balance;
+        }
+
+        function updateTransactionPanel(transactions) {
+            const transactionsPanel = document.getElementById('transactions-list');
+            const loggedInUsername = localStorage.getItem('username');
+            transactionsPanel.innerHTML = '';
+            transactions.forEach(transaction => {
+                const transactionItem = document.createElement('div');
+                transactionItem.className = 'transaction-item';
+                const isOutgoing = transaction[1] === loggedInUsername;
+                const otherUser = isOutgoing ? transaction[2] : transaction[1];
+                const direction = isOutgoing ? '→' : '←';
+                const directionClass = isOutgoing ? 'outgoing' : 'incoming';
+
+                transactionItem.innerHTML = `
+                    <p><span class="arrow ${directionClass}">${direction}</span> <strong>${otherUser}</strong>, ${transaction[4] / 100000} BLUC's</p>
+                    <p><strong>Note:</strong> "${transaction[5]}"</p>
+                    <p><strong>Timestamp:</strong> ${transaction[3]}</p>
+                `;
+                transactionsPanel.appendChild(transactionItem);
+            });
+        }
+
+        function showHome() {
+            document.getElementById('home').style.display = '';
+            document.getElementById('miner').style.display = 'none';
+            document.getElementById('statistic').style.display = 'none';
+        }
+
+        function showMiner() {
+            document.getElementById('home').style.display = 'none';
+            document.getElementById('miner').style.display = '';
+            document.getElementById('statistic').style.display = 'none';
+        }
+
+        function showStatistic() {
+            document.getElementById('home').style.display = 'none';
+            document.getElementById('miner').style.display = 'none';
+            document.getElementById('statistic').style.display = '';
+            fetchStatistics();
+        }
+
+        function showNotification(message) {
+            const overlay = document.createElement('div');
+            overlay.className = 'notification-overlay';
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.innerHTML = `
+                ${message}
+                <button class="close-btn" onclick="closeNotification(this)">×</button>
+            `;
+            overlay.appendChild(notification);
+            document.body.appendChild(overlay);
+
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+        }
+
+        function closeNotification(element) {
+            const overlay = element.closest('.notification-overlay');
+            overlay.querySelector('.notification').classList.remove('show');
+            setTimeout(() => {
+                overlay.remove();
+            }, 500);
+        }
+
+        function changePassword() {
+            const message = `
+            <div class="modal" id="change-password">
+                <h2>Change Password</h2>
+                <input type="password" id="new-password" placeholder="New password" /><br/>
+                <div class="button-container">
+                    <button class="button" onclick="submitPassword()">Submit</button>
+                    <div class="loading-spinner" id="loading-spinner"></div>
+                </div>
+            </div>
+            `;
+            showNotification(message);
+        }
+
+        async function submitPassword() {
+            const newPassword = document.getElementById("new-password").value
+            if (newPassword === "") {
+                closeNotification(document.getElementById("change-password"));
+                showNotification('<h1>Error!</h1><p>Invalid input. Please ensure all fields are correctly filled.</p>');
+                return;
+            }
+
+            const spinner = document.getElementById('loading-spinner');
+            spinner.style.display = 'inline-block';
+            try {
+                const response = await userClient.changePassword(newPassword);
+                if (response.code === 200) {
+                    closeNotification(spinner);
+                    showNotification(`<h1>Password update successful!</h1></p>`);
+                    localStorage.setItem("password", encodeBase64(newPassword))
+                    password = newPassword
+                } else {
+                    showNotification(`<h1>Error!</h1><p>${response.message}</p>`);
+                }
+            } catch (error) {
+                showNotification(`<h1>Error!</h1><p>${error.message}</p>`);
+            } finally {
+                spinner.style.display = 'none';
+            }
+        };
+
+        function createTransaction() {
+            const message = `
+                <div class="modal">
+                    <h2>Create Transaction</h2>
+                    <input type="text" id="transaction-amount" placeholder="Amount" oninput="updateTransactionForm()" /><br/>
+                    <div class="morsels" id="morsels-amount">0 morsels</div>
+                    <input type="text" id="transaction-recipient" placeholder="Recipient" oninput="updateTransactionForm()" /><br/>
+                    <input type="text" id="transaction-note" placeholder="Note" /><br/>
+                    <div class="button-container">
+                        <button class="button" onclick="submitTransaction()">Submit</button>
+                        <div class="loading-spinner" id="loading-spinner"></div>
+                    </div>
+                </div>
+            `;
+            showNotification(message);
+            recipientCheckInterval = setInterval(checkRecipient, 1000);
+        }
+
+        function updateTransactionForm() {
+            const amount = parseFloat(document.getElementById('transaction-amount').value);
+            const recipient = document.getElementById('transaction-recipient').value;
+
+            // Update morsels display
+            const morselsElement = document.getElementById('morsels-amount');
+            if (!isNaN(amount) && amount > 0) {
+                morselsElement.textContent = `${amount * 100000} morsels`;
+            } else {
+                morselsElement.textContent = `0 morsels`;
+            }
+
+            // Validate amount
+            const amountInput = document.getElementById('transaction-amount');
+            if (!isNaN(amount) && amount > 0 && amount * 100000 <= balance) {
+                amountInput.style.color = 'green';
+            } else {
+                amountInput.style.color = 'red';
+            }
+
+            // Validate recipient
+            checkRecipient();
+        };
+
+        async function checkRecipient() {
+            if (document.getElementById('transaction-recipient') === null) {
+                clearInterval(recipientCheckInterval);
+                return;
+            };
+            const recipient = document.getElementById('transaction-recipient').value;
+            const recipientInput = document.getElementById('transaction-recipient');
+
+            if (recipient.trim() === '') {
+                recipientInput.style.color = 'red';
+                return;
+            }
+
+            try {
+                const client = new BlueCoinClient(window.location.origin, true);
+                const response = await client.getBalance(recipient);
+                if (response.code === 200) {
+                    recipientInput.style.color = 'green';
+                } else {
+                    recipientInput.style.color = 'red';
+                }
+            } catch (error) {
+                recipientInput.style.color = 'red';
+            }
+        };
+
+        async function submitTransaction() {
+            const amount = parseFloat(document.getElementById('transaction-amount').value);
+            const recipient = document.getElementById('transaction-recipient').value;
+            const note = document.getElementById('transaction-note').value || '';
+
+            const amountInput = document.getElementById('transaction-amount');
+            const recipientInput = document.getElementById('transaction-recipient');
+
+            if (amountInput.style.color === 'red' || recipientInput.style.color === 'red') {
+                showNotification('<h1>Error!</h1><p>Invalid input. Please ensure all fields are correctly filled.</p>');
+                return;
+            }
+
+            const spinner = document.getElementById('loading-spinner');
+            spinner.style.display = 'inline-block';
+
+            try {
+                const response = await userClient.takeTransaction(amount * 100000, recipient, note);
+                if (response.code === 200) {
+                    setTimeout(getTransaction, 0);
+                    closeNotification(spinner);
+                    showNotification(`<h1>Transaction Successful</h1><p>Sent ${amount} BLUC's to ${recipient}</p>`);
+
+                } else {
+                    showNotification(`<h1>Error!</h1><p>${response.message}</p>`);
+                }
+            } catch (error) {
+                showNotification(`<h1>Error!</h1><p>${error.message}</p>`);
+            } finally {
+                spinner.style.display = 'none';
+            };
+        }
+
+        function deleteAccount() {
+            const message = `
+                <div class="modal" id="delete-account">
+                    <h2>Delete Account</h2>
+                    <p>This action is irreversible. Please enter your password to confirm account deletion.</p>
+                    <input type="password" id="delete-password" placeholder="Password" /><br/>
+                    <div class="button-container">
+                        <button class="button" onclick="submitDeleteAccount()">Delete</button>
+                        <div class="loading-spinner" id="delete-loading-spinner"></div>
+                    </div>
+                </div>
+            `;
+            showNotification(message);
+        }
+
+        async function submitDeleteAccount() {
+            const password = document.getElementById("delete-password").value;
+
+            if (password === "") {
+                closeNotification(document.getElementById("delete-account"));
+                showNotification('<h1>Error!</h1><p>Invalid input. Please ensure all fields are correctly filled.</p>');
+                return;
+            }
+
+            const spinner = document.getElementById('delete-loading-spinner');
+            spinner.style.display = 'inline-block';
+            try {
+                const response = await userClient.deleteUser(password);
+                if (response.code === 200) {
+                    closeNotification(spinner);
+                    showNotification('<h1>Account deleted successfully!</h1><p>You will be redirected to the home page.</p>');
+                    clearCredentials();
+                    setTimeout(() => {
+                        window.location.href = '/ATM/';
+                    }, 3000);
+                } else {
+                    showNotification(`<h1>Error!</h1><p>${response.message}</p>`);
+                }
+            } catch (error) {
+                showNotification(`<h1>Error!</h1><p>${error.message}</p>`);
+            } finally {
+                spinner.style.display = 'none';
+            }
+        }
+
+        window.onload = () => {
+            checkCredentials();
+            initializeBalanceChart();
+        };
+        window.onunload = () => {
+            clearInterval(recipientCheckInterval);
+            clearInterval(balanceHistoryInterval);
+            workers.forEach(worker => worker.terminate());
+        };
+    </script>
+</body>
+
+</html>

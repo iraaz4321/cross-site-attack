@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=0.7">
+    <title>Bluecoin ATM - Login</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1e1e1e, #3a3a3a);
+            color: #ddd;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin: 0;
+            color: #fff;
+        }
+
+        .header p {
+            color: #bbb;
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+
+        .main-container {
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+            max-width: 1000px;
+            flex-grow: 1;
+            padding-top: 20px;
+        }
+
+        .left-column,
+        .right-column {
+            width: 50%;
+            padding: 30px;
+            margin-right: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-container,
+        .about-container {
+            background-color: #333;
+            padding: 2.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-align: justify;
+            width: 100%;
+            height: 60%;
+            font-size: 0.7em;
+        }
+
+        .login-container h1,
+        .about-container h1 {
+            margin-bottom: 1.5rem;
+            color: #fff;
+        }
+
+        .login-container {
+            width: 100%;
+        }
+
+        .login-container input {
+            width: calc(100% - 2rem);
+            padding: 0.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #555;
+            border-radius: 4px;
+            font-size: 1.2rem;
+            background-color: #444;
+            color: #fff;
+        }
+
+        .button-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-container button {
+            padding: 0.5rem 2rem;
+            border: none;
+            border-radius: 4px;
+            background-color: #007bff;
+            color: #fff;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .login-container button:hover {
+            background-color: #0056b3;
+        }
+
+        .login-container .error {
+            color: #ff6666;
+            margin-top: 1rem;
+        }
+
+        .loading-spinner {
+            display: none;
+            margin-left: 10px;
+            width: 20px;
+            height: 20px;
+            border: 4px solid #444;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .signup-link {
+            margin-top: 1rem;
+            font-size: 1rem;
+            color: #007bff;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .signup-link:hover {
+            color: #0056b3;
+        }
+
+        .about-container p {
+            text-align: left;
+            color: #bbb;
+            margin-top: 5px;
+            margin-bottom: 5px;
+            white-space: pre-wrap;
+        }
+    </style>
+    <script src="/ATM/client.js"></script>
+    <script src="/ATM/base64.js"></script>
+</head>
+
+<body>
+    <div class="header">
+        <h1>Bluecoin 3.0</h1>
+        <p>Welcome to the future of bluecoin.</p>
+    </div>
+    <div class="main-container">
+        <div class="left-column">
+            <div class="login-container">
+                <h1>Login</h1>
+                <input type="text" id="username" placeholder="Username" required />
+                <input type="password" id="password" placeholder="Password" required />
+                <div class="button-container">
+                    <button onclick="login()">Login</button>
+                    <div class="loading-spinner" id="loading-spinner"></div>
+                </div>
+                <div class="error" id="error"></div>
+                <div class="signup-link" onclick="javascript:window.location.href = '/ATM/signup/'">Don't have an account? Sign up here!</div>
+            </div>
+        </div>
+        <div class="right-column">
+            <div class="about-container">
+                <h1>About Bluecoin</h1>
+                <p>
+BlueCoin is a digital currency founded in 2023 by Blueloops9, the original goal of the project was to get a working currency inside of a Roblox game called Waste of Space.
+
+It first started as a simple way to make transactions with other accounts hosted on Blue's raspberry pi 4, then we moved to PythonAnywhere and created BlueCoin v2 which utilized the use of PoW (Proof of Work) mining to ensure that all coins are legitimate and not instantly created, to add value.
+
+V3 is the newest iteration. With someoneidk's help, Bluecoin has had a complete refactoring to improve both performance and modularity. Since someoneidk self hosts the server on an i5 9600KF, the performance has drastically improved over PythonAnywhere.
+
+BlueCoin utilizes SHA256 hashing to ensure the security of your password so that no one would be able to access it. (Not even us!)
+
+Join the Discord <a href="https://discord.gg/Bz6tDkRCMq">here!</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const username = localStorage.getItem('username');
+            const encodedPassword = localStorage.getItem('password');
+
+            if (username && encodedPassword) {
+                const password = decodeBase64(encodedPassword);
+                const client = new BlueCoinClient('https://gabserver.eu', true);
+
+                try {
+                    const response = await client.verifyPassword(username, password);
+                    if (response.code === 200) {
+                        window.location.href = '/ATM/webui';
+                    }
+                } catch (error) {
+                    console.error('Auto-login failed:', error);
+                }
+            }
+        });
+
+        function encodeBase64(input) {
+            const bytes = new TextEncoder().encode(input);
+            return base64js.fromByteArray(bytes);
+        }
+
+        function decodeBase64(input) {
+            const bytes = base64js.toByteArray(input);
+            return new TextDecoder().decode(bytes);
+        }
+
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const loadingSpinner = document.getElementById('loading-spinner');
+            const errorElement = document.getElementById('error');
+            loadingSpinner.style.display = 'inline-block';
+            errorElement.textContent = '';
+
+            const client = new BlueCoinClient(window.location.origin, false);
+
+            try {
+                const response = await client.verifyPassword(username, password);
+                console.log(response)
+                if (response.code === 200) {
+                    localStorage.setItem('username', username);
+                    localStorage.setItem('password', encodeBase64(password));
+                    window.location.href = '/ATM/webui';
+                } else {
+                    errorElement.textContent = response.message || 'Invalid username or password';
+                }
+            } catch (error) {
+                errorElement.textContent = error.message || 'An error occurred during login';
+            } finally {
+                loadingSpinner.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+
+</html>
