@@ -2,7 +2,7 @@ FROM python:3.11-alpine
 
 WORKDIR /
 
-COPY ./static ./templates
+COPY ./static ./static
 COPY ./templates ./templates
 COPY ./main.py .
 COPY ./requirements.txt .
