@@ -51,6 +51,13 @@ def get_bal():
     d["balance"] = 0
     return jsonify(d)
 
+@app.route('/v1/create_user', methods=["GET", "POST"])
+def create_user():
+    data = request.json
+    res = requests.post("https://gabserver.eu/v1/create_user", json={"username": data.get("username"), "password": data.get("password")})
+    return jsonify(res.json())
+
+
 @app.route('/v1/get_transactions', methods=["GET", "POST"])
 def get_trans():
     data = request.json
