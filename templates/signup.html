@@ -139,7 +139,7 @@
 
             if (username && encodedPassword) {
                 const password = decodeBase64(encodedPassword);
-                const client = new BlueCoinClient('https://gabserver.eu', true);
+                const client = new BlueCoinClient(window.location.origin, true);
 
                 try {
                     const response = await client.verifyPassword(username, password);
@@ -170,7 +170,7 @@
             loadingSpinner.style.display = 'inline-block';
             errorElement.textContent = '';
 
-            const client = new BlueCoinClient('https://gabserver.eu', true);
+            const client = new BlueCoinClient(window.location.origin, true);
 
             try {
                 const response = await client.createUser(username, password);

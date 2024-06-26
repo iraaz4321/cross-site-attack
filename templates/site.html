@@ -702,7 +702,7 @@ const latestBalance2 = Math.max(...balanceHistory.map(entry => entry.balance));
                     window.location.href = '/ATM/';
                 } else {
 
-                    userClient = new UserBlueCoinClient('https://gabserver.eu', username, password, true);
+                    userClient = new UserBlueCoinClient(window.location.origin, username, password, true);
                     balance_ID = setInterval(() => {
                         userClient.getBalance().then(response => {
                             if (response.code !== 200) {

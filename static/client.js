@@ -20,7 +20,7 @@ function handleResponseNoError(response) {
 
 class BlueCoinClient {
     constructor(baseUrl, noErrorMode = false) {
-        this.baseUrl = "http://127.0.0.1:5000";
+        this.baseUrl = baseUrl
         this.noErrorMode = noErrorMode;
     }
 
@@ -193,7 +193,7 @@ class BlueCoinClient {
 
 class UserBlueCoinClient extends BlueCoinClient {
     constructor(baseUrl, username, password, noErrorMode = false) {
-        super("http://127.0.0.1:5000", noErrorMode);
+        super(baseUrl, noErrorMode);
         this.username = username;
         this.password = password;
     }
