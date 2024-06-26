@@ -155,8 +155,8 @@
             white-space: pre-wrap;
         }
     </style>
-    <script src="/ATM/client.js"></script>
-    <script src="/ATM/base64.js"></script>
+    <script src="{{ url_for('static', filename='client.js') }}"></script>
+    <script src="{{ url_for('static', filename='base64.js') }}"></script>
 </head>
 
 <body>
@@ -238,7 +238,6 @@ Join the Discord <a href="https://discord.gg/Bz6tDkRCMq">here!</a>
 
             try {
                 const response = await client.verifyPassword(username, password);
-                console.log(response)
                 if (response.code === 200) {
                     localStorage.setItem('username', username);
                     localStorage.setItem('password', encodeBase64(password));

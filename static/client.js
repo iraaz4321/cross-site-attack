@@ -44,7 +44,6 @@ class BlueCoinClient {
             username: username,
             password: password
         };
-        console.log(JSON.stringify(data))
         return fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -182,7 +181,6 @@ class BlueCoinClient {
     }
 
     _handleResponse(response) {
-        console.log("HANDLE", response)
         if (this.noErrorMode) {
             return handleResponseNoError(response);
         } else {
